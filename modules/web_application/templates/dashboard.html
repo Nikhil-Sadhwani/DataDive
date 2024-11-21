@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">Dashboard</h1>
+        <a href="{{ url_for('auth.logout') }}">
+            <button>Logout</button>
+        </a>
+
+        <h2>Scraped Data</h2>
+        <a href="{{ url_for('scrape.scrape') }}" class="btn btn-success mb-3">Create Scraped Data</a>
+        {% if scraped_data_pagination.items %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="col">URL</th>
+                    <th scope="col">Content</th>
+                    <th scope="col">Metadata</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in scraped_data_pagination.items %}
+                <tr>
+                    <td>{{ data.url }}</td>
+                    <td>{{ data.content }}</td>
+                    <td>{{ data.metadata }}</td>
+                    <td>
+                        <a href="{{ url_for('dashboard.edit_scraped_data', id=data.id) }}"
+                            class="btn btn-primary btn-sm" style="margin-bottom: 5px;">Edit</a>
+                        <form action="{{ url_for('dashboard.delete_scraped_data', id=data.id) }}" method="POST"
+                            style="display:inline;">
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <nav>
+            <ul class="pagination">
+                {% if scraped_data_pagination.has_prev %}
+                <li class="page-item"><a class="page-link"
+                        href="{{ url_for('dashboard.dashboard', page_scraped=scraped_data_pagination.prev_num) }}">Previous</a>
+                </li>
+                {% endif %}
+                {% for page_num in scraped_data_pagination.iter_pages() %}
+                <li class="page-item {% if page_num == scraped_data_pagination.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('dashboard.dashboard', page_scraped=page_num) }}">{{ page_num
+                        }}</a>
+                </li>
+                {% endfor %}
+                {% if scraped_data_pagination.has_next %}
+                <li class="page-item"><a class="page-link"
+                        href="{{ url_for('dashboard.dashboard', page_scraped=scraped_data_pagination.next_num) }}">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% else %}
+        <p>No Data</p>
+        {% endif %}
+
+        <h2 class="mt-5">Prompts and Responses</h2>
+        <a href="{{ url_for('prompt.handle_prompt') }}" class="btn btn-success mb-3">Create Prompt</a>
+        {% if prompt_log_pagination.items %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="col">Prompt</th>
+                    <th scope="col">Generated Output</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in prompt_log_pagination.items %}
+                <tr>
+                    <td>{{ log.prompt_text }}</td>
+                    <td>{{ log.generated_output }}</td>
+                    <td>
+                        <a href="{{ url_for('dashboard.edit_prompt_log', id=log.id) }}"
+                            class="btn btn-primary btn-sm">Edit</a>
+                        <form action="{{ url_for('dashboard.delete_prompt_log', id=log.id) }}" method="POST"
+                            style="display:inline;">
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <nav>
+            <ul class="pagination">
+                {% if prompt_log_pagination.has_prev %}
+                <li class="page-item"><a class="page-link"
+                        href="{{ url_for('dashboard.dashboard', page_prompts=prompt_log_pagination.prev_num) }}">Previous</a>
+                </li>
+                {% endif %}
+                {% for page_num in prompt_log_pagination.iter_pages() %}
+                <li class="page-item {% if page_num == prompt_log_pagination.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('dashboard.dashboard', page_prompts=page_num) }}">{{ page_num
+                        }}</a>
+                </li>
+                {% endfor %}
+                {% if prompt_log_pagination.has_next %}
+                <li class="page-item"><a class="page-link"
+                        href="{{ url_for('dashboard.dashboard', page_prompts=prompt_log_pagination.next_num) }}">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% else %}
+        <p>No Data</p>
+        {% endif %}
+    </div>
+</body>
+
+</html>
