@@ -5,13 +5,17 @@ from modules.web_application.models.models import User, db
 from flask_migrate import Migrate
 from modules.web_application.views.auth import oauth
 from modules.web_application.views import register_blueprints
+import os
 
 def create_app():
-
     app = Flask(__name__, template_folder='modules/web_application/templates')
+    
+    # Use environment variable for configuration, fallback to local config
     app.config.from_object(Config)
-
-    print(f"Loaded Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")  # Debug Log
+    
+    # Vercel-specific configuration
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', app.config['SECRET_KEY'])
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', app.config['SQLALCHEMY_DATABASE_URI'])
 
     try:
         db.init_app(app)
@@ -46,6 +50,13 @@ def create_app():
 
     return app
 
+# Vercel requires an app instance
+app = create_app()
+
+# For local development
 if __name__ == "__main__":
-    app = create_app()
     app.run(debug=True)
+
+# Vercel serverless function entry point
+def handler(event, context):
+    return app
