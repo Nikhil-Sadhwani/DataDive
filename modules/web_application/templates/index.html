@@ -1,14 +1,51 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flask Web App</title>
-</head>
-<body>
-    <h1>Welcome to the Flask Web Application</h1>
-    <a href="{{url_for('auth.login_google')}}">
-        <button>Login with Google</button>
-    </a>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center">
+    <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-8 max-w-md w-full text-center">
+        <h1 class="text-4xl font-bold mb-6 text-primary-600 dark:text-primary-400">
+            Data Dive
+        </h1>
+        <p class="text-gray-600 dark:text-gray-300 mb-8">
+            Unlock insights with intelligent web scraping and AI-powered analysis
+        </p>
+        
+        <div class="space-y-4">
+            {% if not authenticated %}
+            <a href="{{ url_for('auth.login_google') }}" class="w-full">
+                <button class="w-full bg-primary-500 hover:bg-primary-600 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center">
+                    <i class="fab fa-google mr-3"></i>
+                    Login with Google
+                </button>
+            </a>
+            
+            <div class="flex items-center justify-center my-4">
+                <div class="border-t border-gray-300 dark:border-gray-700 w-full"></div>
+                <span class="px-4 text-gray-500 dark:text-gray-400">or</span>
+                <div class="border-t border-gray-300 dark:border-gray-700 w-full"></div>
+            </div>
+            {% else %}
+            <div class="text-center">
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    You are already logged in. 
+                </p>
+                <a href="{{ url_for('dashboard.dashboard') }}" class="w-full">
+                    <button class="w-full bg-primary-500 hover:bg-primary-600 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105">
+                        Go to Dashboard
+                    </button>
+                </a>
+            </div>
+            {% endif %}
+            
+            <div class="text-sm text-gray-600 dark:text-gray-300">
+                <p>Discover the power of AI-driven web scraping</p>
+                <ul class="list-disc list-inside mt-2 text-left">
+                    <li>Intelligent Data Extraction</li>
+                    <li>Advanced AI Analysis</li>
+                    <li>Secure Google Authentication</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

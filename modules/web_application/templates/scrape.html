@@ -1,27 +1,117 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scrape Creation</title>
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-</head>
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- Scraping Form Section -->
+        <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden mb-8">
+            <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                <h1 class="text-3xl font-bold text-primary-600 dark:text-primary-400">
+                    <i class="fas fa-globe-americas mr-3"></i>Web Scraper
+                </h1>
+            </div>
+            
+            <form method="POST" class="p-6 space-y-6">
+                {{ form.hidden_tag() }}
+                
+                <div>
+                    <label for="{{ form.url.id }}" class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">
+                        Enter URL to Scrape
+                    </label>
+                    <div class="flex">
+                        {{ form.url(class="w-full px-3 py-2 text-gray-700 dark:text-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-primary-500") }}
+                        <button type="submit" class="bg-primary-500 text-white px-4 py-2 rounded-r-lg hover:bg-primary-600 transition duration-300 ease-in-out">
+                            <i class="fas fa-search mr-2"></i>Scrape
+                        </button>
+                    </div>
+                    {% if form.url.errors %}
+                        <div class="text-red-500 text-sm mt-2">
+                            {% for error in form.url.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
 
-<body>
-    <div class="container">
-        <h1>Scrape URL</h1>
-        <form method="POST" action="{{ url_for('scrape.scrape') }}">
-            {{ form.hidden_tag() }}
-            <div class="form-group">
-                {{ form.url.label }}
-                {{ form.url(class="form-control") }}
+        <!-- Scraping Results Section -->
+        {% if scraped_data %}
+        <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden">
+            <div class="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <h2 class="text-2xl font-semibold text-primary-600 dark:text-primary-400">
+                    <i class="fas fa-file-alt mr-3"></i>Scraping Results
+                </h2>
+                <a href="{{ url_for('dashboard.dashboard') }}" class="text-gray-600 dark:text-gray-300 hover:text-primary-500 transition">
+                    <i class="fas fa-arrow-right mr-2"></i>View in Dashboard
+                </a>
             </div>
-            <div class="form-group">
-                {{ form.submit(class="btn btn-primary") }}
+            
+            <div class="p-6 space-y-4">
+                <!-- URL Details -->
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-link text-primary-500 mr-3"></i>
+                        <h3 class="font-semibold text-gray-800 dark:text-gray-200">URL Scraped</h3>
+                    </div>
+                    <p class="text-gray-600 dark:text-gray-400 break-words">{{ scraped_data.url }}</p>
+                </div>
+
+                <!-- Metadata -->
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-info-circle text-primary-500 mr-3"></i>
+                        <h3 class="font-semibold text-gray-800 dark:text-gray-200">Metadata</h3>
+                    </div>
+                    <p class="text-gray-600 dark:text-gray-400">{{ scraped_data.metadata }}</p>
+                </div>
+
+                <!-- Content Preview -->
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-file-text text-primary-500 mr-3"></i>
+                        <h3 class="font-semibold text-gray-800 dark:text-gray-200">Content Preview</h3>
+                    </div>
+                    <div class="prose dark:prose-invert max-h-64 overflow-y-auto">
+                        <p class="text-gray-600 dark:text-gray-400">
+                            {{ scraped_data.content[:500] }}... 
+                            <span class="text-sm italic">(truncated)</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Scraping Details -->
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-clock text-primary-500 mr-3"></i>
+                        <h3 class="font-semibold text-gray-800 dark:text-gray-200">Scraping Details</h3>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <span class="text-gray-500 dark:text-gray-400">Scraped At:</span>
+                            <p class="text-gray-700 dark:text-gray-300">{{ scraped_data.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                        </div>
+                        <div>
+                            <span class="text-gray-500 dark:text-gray-400">Content Length:</span>
+                            <p class="text-gray-700 dark:text-gray-300">{{ scraped_data.content|length }} characters</p>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </form>
+        </div>
+        {% endif %}
     </div>
-</body>
+</div>
+{% endblock %}
 
-</html>
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Optional: Add any interactive elements or animations
+        const resultSections = document.querySelectorAll('.bg-gray-50');
+        resultSections.forEach(section => {
+            section.classList.add('transition', 'duration-300', 'ease-in-out', 'transform', 'hover:scale-[1.02]');
+        });
+    });
+</script>
+{% endblock %}

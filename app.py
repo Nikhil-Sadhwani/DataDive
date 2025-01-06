@@ -11,7 +11,14 @@ def create_app():
     app = Flask(__name__, template_folder='modules/web_application/templates')
     app.config.from_object(Config)
 
-    db.init_app(app)
+    print(f"Loaded Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")  # Debug Log
+
+    try:
+        db.init_app(app)
+        print("SQLAlchemy initialized successfully.")
+    except Exception as e:
+        print(f"Error initializing SQLAlchemy: {e}")
+        
     migrate = Migrate(app, db)
     oauth.init_app(app)
 
@@ -22,6 +29,18 @@ def create_app():
     @login_manager.user_loader 
     def load_user(user_id): 
         return User.query.get(int(user_id))
+
+    # Custom Jinja2 filter for JavaScript escaping
+    def escapejs(text):
+        if text is None:
+            return ''
+        return text.replace('\\', '\\\\') \
+                  .replace('\n', '\\n') \
+                  .replace('\r', '\\r') \
+                  .replace('"', '\\"') \
+                  .replace("'", "\\'")
+
+    app.jinja_env.filters['escapejs'] = escapejs
 
     register_blueprints(app)
 

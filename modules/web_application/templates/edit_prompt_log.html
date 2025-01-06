@@ -1,31 +1,89 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Prompt Log</title>
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-</head>
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-2xl mx-auto bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden">
+        <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+            <h1 class="text-3xl font-bold text-primary-600 dark:text-primary-400">
+                <i class="fas fa-edit mr-3"></i>Edit Prompt Log
+            </h1>
+        </div>
+        
+        <form method="POST" class="p-6 space-y-6">
+            <div>
+                <label for="prompt_text" class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">
+                    Prompt Text
+                </label>
+                <textarea 
+                    id="prompt_text" 
+                    name="prompt_text" 
+                    rows="4" 
+                    class="w-full px-3 py-2 text-gray-700 dark:text-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-y"
+                >{{ log.prompt_text }}</textarea>
+            </div>
 
-<body>
-    <div class="container mt-5">
-        <h1>Edit Prompt Log</h1>
-        <form method="POST">
-            <div class="form-group">
-                <label for="prompt_text">Prompt Text</label>
-                <textarea class="form-control" id="prompt_text" name="prompt_text"
-                    rows="3">{{ log.prompt_text }}</textarea>
+            <div>
+                <label for="generated_output" class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">
+                    Generated Output
+                </label>
+                <textarea 
+                    id="generated_output" 
+                    name="generated_output" 
+                    rows="6" 
+                    class="w-full px-3 py-2 text-gray-700 dark:text-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-y prose dark:prose-invert"
+                >{{ log.generated_output }}</textarea>
             </div>
-            <div class="form-group">
-                <label for="generated_output">Generated Output</label>
-                <textarea class="form-control" id="generated_output" name="generated_output"
-                    rows="5">{{ log.generated_output }}</textarea>
+
+            <div class="flex justify-between items-center">
+                <div class="text-sm text-gray-500 dark:text-gray-400">
+                    <p>
+                        <strong>Created:</strong> 
+                        {{ log.created_at.strftime('%Y-%m-%d %H:%M') }}
+                    </p>
+                    <p>
+                        <strong>Tokens Used:</strong> 
+                        {{ log.tokens_used }}
+                    </p>
+                </div>
+
+                <div class="flex space-x-4">
+                    <a 
+                        href="{{ url_for('dashboard.dashboard') }}" 
+                        class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600 px-4 py-2 rounded-lg transition duration-300 ease-in-out"
+                    >
+                        <i class="fas fa-times mr-2"></i>Cancel
+                    </a>
+                    <button 
+                        type="submit" 
+                        class="bg-primary-500 text-white hover:bg-primary-600 px-4 py-2 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 flex items-center"
+                    >
+                        <i class="fas fa-save mr-2"></i>Update
+                    </button>
+                </div>
             </div>
-            <button type="submit" class="btn btn-primary">Update</button>
-            <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-secondary">Cancel</a>
         </form>
     </div>
-</body>
+</div>
+{% endblock %}
 
-</html>
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const promptTextarea = document.getElementById('prompt_text');
+        const outputTextarea = document.getElementById('generated_output');
+        
+        // Auto-resize functionality for textareas
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
+
+        promptTextarea.addEventListener('input', () => autoResize(promptTextarea));
+        outputTextarea.addEventListener('input', () => autoResize(outputTextarea));
+
+        // Initial resize
+        autoResize(promptTextarea);
+        autoResize(outputTextarea);
+    });
+</script>
+{% endblock %}

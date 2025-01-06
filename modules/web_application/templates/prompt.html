@@ -1,27 +1,194 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prompt Creation</title>
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-</head>
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden">
+        <!-- Prompt Input Section -->
+        <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+            <h1 class="text-3xl font-bold mb-4 text-primary-600 dark:text-primary-400">
+                <i class="fas fa-robot mr-3"></i>AI Prompt Generator
+            </h1>
+            <form id="promptForm" method="POST" action="{{ url_for('prompt.handle_prompt') }}" class="space-y-4">
+                {{ form.hidden_tag() }}
+                <div>
+                    {{ form.prompt_text.label(class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2") }}
+                    {{ form.prompt_text(
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white resize-y min-h-[100px]", 
+                        placeholder="Enter your prompt here...",
+                        rows="4"
+                    ) }}
+                    {% if form.prompt_text.errors %}
+                        <div class="text-red-500 text-sm mt-1">
+                            {% for error in form.prompt_text.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    {{ form.submit(
+                        class="bg-primary-500 hover:bg-primary-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center",
+                        id="submitBtn"
+                    ) }}
+                    <div id="loadingSpinner" class="hidden">
+                        <svg class="animate-spin h-6 w-6 text-primary-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </form>
+        </div>
 
-<body>
-    <div class="container">
-        <h1>Prompt</h1>
-        <form method="POST" action="{{ url_for('prompt.handle_prompt') }}">
-            {{ form.hidden_tag() }}
-            <div class="form-group">
-                {{ form.prompt_text.label }}
-                {{ form.prompt_text(class="form-control") }}
+        <!-- Response Section -->
+        <div id="responseSection" class="p-6 bg-gray-50 dark:bg-gray-900 min-h-[300px]">
+            <div id="responseContent" class="prose dark:prose-invert max-w-none">
+                {% if generated_output %}
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold mb-4 text-primary-600 dark:text-primary-400">
+                        <i class="fas fa-comment-dots mr-3"></i>AI Response
+                    </h2>
+                    <div id="typingResponse" class="text-gray-800 dark:text-gray-200 leading-relaxed">
+                        <!-- Typing effect will replace this content -->
+                        {{ generated_output | safe }}
+                    </div>
+                    <div class="mt-4 text-right text-sm text-gray-500 dark:text-gray-400">
+                        <button id="copyResponseBtn" class="hover:text-primary-600 transition">
+                            <i class="fas fa-copy mr-2"></i>Copy Response
+                        </button>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center text-gray-500 dark:text-gray-400 py-12">
+                    <i class="fas fa-magic text-4xl mb-4 text-primary-500"></i>
+                    <p class="text-xl">Your AI-generated response will appear here</p>
+                    <p class="text-sm mt-2">Enter a prompt and click generate</p>
+                </div>
+                {% endif %}
             </div>
-            <div class="form-group">
-                {{ form.submit(class="btn btn-primary") }}
-            </div>
-        </form>
+        </div>
     </div>
-</body>
+</div>
+{% endblock %}
 
-</html>
+{% block head %}
+<style>
+    /* Enhanced markdown-like styling */
+    #typingResponse h1 { 
+        font-size: 1.75rem; 
+        font-weight: bold; 
+        color: theme('colors.primary.600');
+        margin-bottom: 1rem;
+        border-bottom: 2px solid theme('colors.primary.200');
+        padding-bottom: 0.5rem;
+    }
+    #typingResponse h2 { 
+        font-size: 1.5rem; 
+        font-weight: bold; 
+        color: theme('colors.primary.500');
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    #typingResponse h3 { 
+        font-size: 1.25rem; 
+        font-weight: bold; 
+        color: theme('colors.primary.400');
+        margin-top: 1.25rem;
+        margin-bottom: 0.75rem;
+    }
+    #typingResponse p {
+        margin-bottom: 1rem;
+        line-height: 1.6;
+    }
+    #typingResponse ul, #typingResponse ol {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    #typingResponse code {
+        background-color: theme('colors.gray.100');
+        color: theme('colors.primary.600');
+        padding: 0.2rem 0.4rem;
+        border-radius: 0.25rem;
+        font-family: monospace;
+    }
+    #typingResponse pre {
+        background-color: theme('colors.gray.50');
+        border: 1px solid theme('colors.gray.200');
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        overflow-x: auto;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('promptForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const copyResponseBtn = document.getElementById('copyResponseBtn');
+        const typingResponseEl = document.getElementById('typingResponse');
+
+        // Typing effect function with improved speed and markdown support
+        function typeWriter(text, element, speed = 10) {
+            element.innerHTML = ''; // Clear previous content
+            let i = 0;
+            
+            // Use marked.js for markdown parsing
+            const parsedText = marked.parse(text);
+            
+            function type() {
+                if (i < parsedText.length) {
+                    // Append character or HTML tag
+                    const char = parsedText.charAt(i);
+                    if (char === '<') {
+                        // If it's an HTML tag, find the full tag
+                        const tagEnd = parsedText.indexOf('>', i);
+                        if (tagEnd !== -1) {
+                            element.innerHTML += parsedText.substring(i, tagEnd + 1);
+                            i = tagEnd + 1;
+                        }
+                    } else {
+                        element.innerHTML += char;
+                        i++;
+                    }
+                    
+                    // Faster typing with slight randomization
+                    setTimeout(type, speed + Math.random() * 5);
+                }
+            }
+            type();
+        }
+
+        // Trigger typing effect if response exists
+        {% if generated_output %}
+        typeWriter("{{ generated_output | escapejs | safe }}", typingResponseEl);
+        {% endif %}
+
+        // Copy response functionality
+        if (copyResponseBtn) {
+            copyResponseBtn.addEventListener('click', function() {
+                const responseText = document.querySelector('#typingResponse');
+                if (responseText) {
+                    navigator.clipboard.writeText(responseText.innerText).then(() => {
+                        this.innerHTML = '<i class="fas fa-check mr-2"></i>Copied!';
+                        setTimeout(() => {
+                            this.innerHTML = '<i class="fas fa-copy mr-2"></i>Copy Response';
+                        }, 2000);
+                    });
+                }
+            });
+        }
+
+        // Optional: Add loading state to form submission
+        form.addEventListener('submit', function() {
+            submitBtn.disabled = true;
+            loadingSpinner.classList.remove('hidden');
+        });
+    });
+</script>
+{% endblock %}

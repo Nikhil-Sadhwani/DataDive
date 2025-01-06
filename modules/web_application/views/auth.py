@@ -57,6 +57,8 @@ def authorize_google():
 
 @auth_bp.route("/logout")
 def logout():
+    session.pop('email', None)
+    session.pop('outh_token', None)
     session.clear()
     logout_user()
     flash("You have been logged out!", "success")

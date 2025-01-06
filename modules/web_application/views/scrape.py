@@ -11,6 +11,8 @@ scrape_bp = Blueprint('scrape', __name__)
 @login_required
 def scrape():
     form = ScrapeURLForm()
+    scraped_data = None
+    
     if form.validate_on_submit():
         url = form.url.data
         try:
@@ -22,23 +24,35 @@ def scrape():
 
         soup = BeautifulSoup(response.content, 'html.parser')
         
+        # Enhanced metadata extraction
         title = soup.title.string if soup.title else 'No title found'
-        description = soup.find('meta', {'name': 'description'})
-        description = description['content'] if description else 'No description found'
+        description_tag = soup.find('meta', {'name': 'description'})
+        description = description_tag['content'] if description_tag else 'No description found'
         
-        content = soup.get_text()
+        # Extract content
+        content = soup.get_text(strip=True, separator=' ')
+        
+        # Truncate content if too long
+        content = content[:10000] if len(content) > 10000 else content
 
+        # Prepare metadata as a dictionary
+        data_metadata = {
+            'title': title,
+            'description': description,
+            'url': url,
+            'content_length': len(content)
+        }
+        
+        # Create ScrapedData entry
         scraped_data = ScrapedData(
             url=url,
             content=content,
-            metadata=f"Title: {title}, Description: {description}",
+            data_metadata=data_metadata,
             created_by_user_id=current_user.id
-            # created_by_user_id=1
         )
         db.session.add(scraped_data)
         db.session.commit()
 
         flash('Scraping successful', 'success')
-        return redirect(url_for('dashboard.dashboard'))
     
-    return render_template('scrape.html', form=form)
+    return render_template('scrape.html', form=form, scraped_data=scraped_data)

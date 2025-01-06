@@ -20,11 +20,14 @@ llm = ChatGoogleGenerativeAI(
 @login_required
 def handle_prompt():
     form = PromptForm()
+    generated_output = None
+
     if form.validate_on_submit():
         prompt_text = form.prompt_text.data
 
         if not prompt_text:
-            return jsonify({"error": "Prompt text is required"}), 400
+            flash("Prompt text is required", "danger")
+            return render_template('prompt.html', form=form)
 
         messages = [
             (
@@ -41,13 +44,12 @@ def handle_prompt():
             prompt_text=prompt_text,
             generated_output=response,
             created_by_user_id=current_user.id,
-            # created_by_user_id=1,
             tokens_used=tokens_used
         )
         db.session.add(prompt_log)
         db.session.commit()
 
-        flash('Resonse generated successful', 'success')
-        return redirect(url_for('dashboard.dashboard'))
-    
-    return render_template('prompt.html', form=form)
+        generated_output = response
+        flash('Response generated successfully', 'success')
+
+    return render_template('prompt.html', form=form, generated_output=generated_output)
