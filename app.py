@@ -6,57 +6,53 @@ from flask_migrate import Migrate
 from modules.web_application.views.auth import oauth
 from modules.web_application.views import register_blueprints
 import os
+import sys
 
-def create_app():
-    app = Flask(__name__, template_folder='modules/web_application/templates')
-    
-    # Use environment variable for configuration, fallback to local config
-    app.config.from_object(Config)
-    
-    # Vercel-specific configuration
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', app.config['SECRET_KEY'])
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', app.config['SQLALCHEMY_DATABASE_URI'])
+# Global app instance
+app = Flask(__name__, template_folder='modules/web_application/templates')
 
-    try:
-        db.init_app(app)
-        print("SQLAlchemy initialized successfully.")
-    except Exception as e:
-        print(f"Error initializing SQLAlchemy: {e}")
-        
-    migrate = Migrate(app, db)
-    oauth.init_app(app)
+# Use environment variable for configuration, fallback to local config
+app.config.from_object(Config)
 
-    login_manager = LoginManager() 
-    login_manager.login_view = "auth.login_google" 
-    login_manager.init_app(app)
+# Vercel-specific configuration
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', app.config['SECRET_KEY'])
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', app.config['SQLALCHEMY_DATABASE_URI'])
 
-    @login_manager.user_loader 
-    def load_user(user_id): 
-        return User.query.get(int(user_id))
+# Disable SQLAlchemy modification tracking
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    # Custom Jinja2 filter for JavaScript escaping
-    def escapejs(text):
-        if text is None:
-            return ''
-        return text.replace('\\', '\\\\') \
-                  .replace('\n', '\\n') \
-                  .replace('\r', '\\r') \
-                  .replace('"', '\\"') \
-                  .replace("'", "\\'")
+# Initialize extensions
+db.init_app(app)
+migrate = Migrate(app, db)
+oauth.init_app(app)
 
-    app.jinja_env.filters['escapejs'] = escapejs
+login_manager = LoginManager() 
+login_manager.login_view = "auth.login_google" 
+login_manager.init_app(app)
 
-    register_blueprints(app)
+@login_manager.user_loader 
+def load_user(user_id): 
+    return User.query.get(int(user_id))
 
+# Custom Jinja2 filter for JavaScript escaping
+def escapejs(text):
+    if text is None:
+        return ''
+    return text.replace('\\', '\\\\') \
+              .replace('\n', '\\n') \
+              .replace('\r', '\\r') \
+              .replace('"', '\\"') \
+              .replace("'", "\\'")
+
+app.jinja_env.filters['escapejs'] = escapejs
+
+# Register blueprints
+register_blueprints(app)
+
+# Vercel serverless function handler
+def handler(event, context):
     return app
-
-# Vercel requires an app instance
-app = create_app()
 
 # For local development
 if __name__ == "__main__":
     app.run(debug=True)
-
-# Vercel serverless function entry point
-def handler(event, context):
-    return app
